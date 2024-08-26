@@ -32,34 +32,32 @@ purchaseButton.addEventListener('click', () => {
     if(totalChange === 0){
         changeDueOutput.textContent = "No change due - customer paid with exact cash";
         return;
+        
     }
 
     // Calculate what bills/coins to use and subtract those from the cid array
     // need a way to check if its possible, then either commit or rollback the transaction
-    const cidCopy = cid.slice();
+    const cidDuplicate = cid.slice();
+    const transactionArray = cid.slice().map(x => x[1] = 0);
+    console.log(`change needed is ${totalChange}`);
     let changeNeeded = totalChange;
     while(changeNeeded > 0){
-        const withdrawn = getLargestAvailableBill(changeNeeded, cidCopy);
-        if(withdrawn === 0){
-            
-            alert('not enough change in drawer');
+        const withdrawn = getLargestAvailableBill(changeNeeded, cidDuplicate);
+        if(withdrawn < 0){
+            changeDueOutput.textContent = "Status: INSUFFICIENT_FUNDS";
             return;
         }
 
         const removalIndex = getCidIndexFromAmount(withdrawn);
-        if(removalIndex < 0){
-            throw Exception();
-            // index not found from amount!
-        }
-        cidCopy[removalIndex][1] -= withdrawn;
-        console.log(`removing ${withdrawn} from ${cidCopy[removalIndex][1]}`);
-        // remove this chnage/bill from cidCopy
-
+        cidDuplicate[removalIndex][1] -= withdrawn;
+        transactionArray[removalIndex][1] = withdrawn;
         changeNeeded = parseFloat((changeNeeded - withdrawn).toFixed(2));
     }
 
-    changeDueOutput.textContent = cash;
-    console.log(cash);
+    cid = cidDuplicate;
+    console.log(transactionArray);
+    changeDueOutput.textContent = "Status: OPEN";
+    console.log(`Transaction complete. CID = ${cid}`);
 });
 
 const getLargestAvailableBill = (amount, cashInDrawerArray) => {
@@ -92,7 +90,7 @@ const getLargestAvailableBill = (amount, cashInDrawerArray) => {
         return 0.01;
     }
     else{
-        return 0;
+        return -1;
     }
 };
 
