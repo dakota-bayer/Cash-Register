@@ -28,7 +28,7 @@ purchaseButton.addEventListener('click', () => {
     }
 
     // Calculate change needed
-    const totalChange = cash - price;
+    const totalChange = parseFloat((cash - price).toFixed(2));
     if(totalChange === 0){
         changeDueOutput.textContent = "No change due - customer paid with exact cash";
         return;
@@ -37,14 +37,94 @@ purchaseButton.addEventListener('click', () => {
     // Calculate what bills/coins to use and subtract those from the cid array
     // need a way to check if its possible, then either commit or rollback the transaction
     const cidCopy = cid.slice();
-    const changeNeeded = totalChange;
-    for(let i = cid.length - 1; i >= 0; i--){
-        if(changeNeeded - 100 >= 0){
-            // Add a 100 to the change
+    let changeNeeded = totalChange;
+    while(changeNeeded > 0){
+        const withdrawn = getLargestAvailableBill(changeNeeded, cidCopy);
+        if(withdrawn === 0){
+            
+            alert('not enough change in drawer');
+            return;
         }
+
+        const removalIndex = getCidIndexFromAmount(withdrawn);
+        if(removalIndex < 0){
+            throw Exception();
+            // index not found from amount!
+        }
+        cidCopy[removalIndex][1] -= withdrawn;
+        console.log(`removing ${withdrawn} from ${cidCopy[removalIndex][1]}`);
+        // remove this chnage/bill from cidCopy
+
+        changeNeeded = parseFloat((changeNeeded - withdrawn).toFixed(2));
     }
 
     changeDueOutput.textContent = cash;
     console.log(cash);
 });
 
+const getLargestAvailableBill = (amount, cashInDrawerArray) => {
+    console.log(`Entered getLargestAvailableBill(${amount}, ${cashInDrawerArray})`)
+    if(cashInDrawerArray[8][1] >= 100 && amount >= 100 ){
+        return 100;
+    }
+    else if(cashInDrawerArray[7][1] >= 20 && amount >= 20 ){
+        return 20;
+    }
+    else if(cashInDrawerArray[6][1] >= 10 && amount >= 10 ){
+        return 10;
+    }
+    else if(cashInDrawerArray[5][1] >= 5 && amount >= 5 ){
+        return 5;
+    }
+    else if(cashInDrawerArray[4][1] >= 1 && amount >= 1 ){
+        return 1;
+    }
+    else if(cashInDrawerArray[3][1] >= 0.25 && amount >= 0.25 ){
+        return 0.25;
+    }
+    else if(cashInDrawerArray[2][1] >= 0.10 && amount >= 0.10 ){
+        return 0.10;
+    }
+    else if(cashInDrawerArray[1][1] >= 0.05 && amount >= 0.05 ){
+        return 0.05;
+    }
+    else if(cashInDrawerArray[0][1] >= 0.01 && amount >= 0.01 ){
+        return 0.01;
+    }
+    else{
+        return 0;
+    }
+};
+
+const getCidIndexFromAmount = amount => {
+    if(amount === 100){
+        return 8;
+    }
+    else if(amount === 20){
+        return 7;
+    }
+    else if(amount === 10){
+        return 6;
+    }
+    else if(amount === 5){
+        return 5;
+    }
+    else if(amount === 1){
+        return 4;
+    }
+    else if(amount === 0.25){
+        return 3;
+    }
+    else if(amount === 0.1){
+        return 2;
+    }
+    else if(amount === 0.05){
+        return 1;
+    }
+    else if(amount === 0.01){
+        return 0;
+    }
+    else{
+        return -1;
+    }
+}
